@@ -84,6 +84,9 @@ public class CurveP224 {
 
         System.out.println("//////////////////////////////////////////////////////////////////////////////");
         System.out.println("Hello, Digital signature begin, Bob chose EC P-224 with base point P");
+        System.out.println("Alice calculate H(M)");
+        String H = Curve.SHA_512(M);
+        System.out.println(H);
 
     }
 }

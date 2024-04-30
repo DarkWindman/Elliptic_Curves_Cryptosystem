@@ -1,10 +1,21 @@
 import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 
 public class Curve {
     private BigInteger p;
     private BigInteger a;
     private BigInteger b;
+    private static MessageDigest md;
+
+    static {
+        try {
+            md = MessageDigest.getInstance("SHA-512");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
 
     public Curve(BigInteger p, BigInteger a, BigInteger b)
     {
@@ -38,6 +49,12 @@ public class Curve {
 
         BigInteger result = new BigInteger(blbl.toString(), 2);
         return result;
+    }
+
+    public static String SHA_512(String input) {
+        byte[] messageDigest = md.digest(input.getBytes());
+        BigInteger no = new BigInteger(1, messageDigest);
+        return no.toString(16);
     }
 
     private static String xor(String a, String b) {
