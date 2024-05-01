@@ -7,6 +7,7 @@ public class Curve {
     private BigInteger p;
     private BigInteger a;
     private BigInteger b;
+    private static BigInteger n;
     private static MessageDigest md;
 
     static {
@@ -17,11 +18,12 @@ public class Curve {
         }
     }
 
-    public Curve(BigInteger p, BigInteger a, BigInteger b)
+    public Curve(BigInteger p, BigInteger a, BigInteger b, BigInteger n)
     {
         this.p = p;
         this.a = a;
         this.b = b;
+        this.n = n;
     }
     static BigInteger BlumBlumaBits(BigInteger r1, BigInteger p) {
         String bits = p.toString(2);
@@ -103,7 +105,7 @@ public class Curve {
 
     public static BigInteger Wrap(String k, DotsGroup P)
     {
-        String Sx = P.ToAffine(P).get(0).toString(2);
+        String Sx = P.ToAffine(P).x.toString(2);
         ArrayList<String> pair = toonelenght(Sx, k);
         String xor = xor(pair.get(0), pair.get(1));
         BigInteger Ck = new BigInteger(xor, 2);
@@ -112,7 +114,7 @@ public class Curve {
 
     public static String UnWrap(BigInteger Ck, DotsGroup P)
     {
-        String Sx = P.ToAffine(P).get(0).toString(2);
+        String Sx = P.ToAffine(P).x.toString(2);
         ArrayList<String> pair = toonelenght(Sx, Ck.toString(2));
         String xor = xor(pair.get(0), pair.get(1));
         return xor;
@@ -127,11 +129,31 @@ public class Curve {
         }
         return xor;
     }
+
+    public static BigInteger Sign(BigInteger k, BigInteger H, BigInteger da, BigInteger r)
+    {
+        BigInteger s = k.modInverse(n).multiply(H.add(da.multiply(r)));
+        return s;
+    }
+
+    public static void Verify(BigInteger r, BigInteger s,DotsGroup Base, DotsGroup Qa, BigInteger H)
+    {
+        BigInteger u1 = s.modInverse(n).multiply(H).mod(n);
+        BigInteger u2 = s.modInverse(n).multiply(r).mod(n);
+        Curve.DotsGroup u1P = Base.ScalarMultipliacationMontgomery(Base, u1);
+        Curve.DotsGroup u2P = Base.ScalarMultipliacationMontgomery(Qa, u2);
+        Curve.DotsGroup result = u1P.PointsAdd(u1P, u2P);
+        result = result.ToAffine(result);
+        result.Pointsout();
+        BigInteger v = result.x.mod(n);
+        if(v.equals(r)) System.out.println("Signature correct");
+        else System.out.println("OOps, your signature is not correct");
+    }
     private DotsGroup Inf = new DotsGroup(BigInteger.ZERO,BigInteger.ONE,BigInteger.ZERO);
     public class DotsGroup{
-        private BigInteger x;
-        private BigInteger y;
-        private BigInteger z;
+        public BigInteger x;
+        public BigInteger y;
+        public BigInteger z;
         public DotsGroup(BigInteger x, BigInteger y, BigInteger z)
         {
             /*if(z.equals(BigInteger.ONE)) {
@@ -220,16 +242,17 @@ public class Curve {
             return ScalarMultipliacationMontgomery(Qa, db);
         }
 
-        public ArrayList<BigInteger> ToAffine(DotsGroup P)
+        public DotsGroup ToAffine(DotsGroup P)
         {
-            ArrayList<BigInteger> result = new ArrayList<>();
-            if(P == Inf) System.out.println("P = Oe");
+            if(P == Inf) {
+                System.out.println("P = Oe");
+                return Inf;
+            }
             else {
                 //System.out.println(" (" + P.x.multiply(P.z.modInverse(p)).mod(p).toString(16) + ", " + P.y.multiply(P.z.modInverse(p)).mod(p).toString(16) + ")");
-                result.add(P.x.multiply(P.z.modInverse(p)).mod(p));
-                result.add(P.y.multiply(P.z.modInverse(p)).mod(p));
+                DotsGroup aff = new DotsGroup(P.x.multiply(P.z.modInverse(p)).mod(p), P.y.multiply(P.z.modInverse(p)).mod(p), BigInteger.ONE);
+                return aff;
             }
-            return result;
         }
 
         public void ToProjective(BigInteger x, BigInteger y, BigInteger z)
