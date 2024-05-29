@@ -19,6 +19,7 @@ public class CurveP224 {
         System.out.println("Hello, Diffie-Hellman protocol start. Alice generate da and calculate Qa");
         BigInteger da = new BigInteger("1", 10);
         while (da.equals(BigInteger.ONE) || da.equals(BigInteger.ZERO)) da = E.BlumBlumaBits(res, p);
+        long t1 = System.currentTimeMillis();
         Curve.DotsGroup Qa = Base.ScalarMultipliacationMontgomery(Base, da);
         System.out.println("Qa: ");
         Qa.ToAffine(Qa).Pointsout();
@@ -39,8 +40,11 @@ public class CurveP224 {
         SB = SB.ToAffine(SB);
         SA.Pointsout();
         SB.Pointsout();
+        long t2 = System.currentTimeMillis();
+        System.out.println("Times Diffie-Hellman protocol : " + (t2 - t1) + "mls");
+        System.out.println("_____________________________________________________________________");
         System.out.println("/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////");
-
+        t1 = System.currentTimeMillis();
         System.out.println("Hello, Directional encryption begin, Bob chose EC P-224 with base point P");
         Base.ToAffine(Base);
         System.out.println("Bob published his public key Qb");
@@ -83,17 +87,21 @@ public class CurveP224 {
         String keyBob = Curve.UnWrap(Sk, Sb);
         System.out.println("Decrypted M:");
         System.out.println(Curve.Dec(Cm,keyBob));
+        t2 = System.currentTimeMillis();
+        System.out.println("Times Directional encryption : " + (t2 - t1) + "mls");
+        System.out.println("_____________________________________________________________________");
 
         System.out.println("//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////");
         System.out.println("Hello, Digital signature begin, Bob chose EC P-224 with base point P");
         System.out.println("Alice calculate H(M)");
+        t1 = System.currentTimeMillis();
         BigInteger H = new BigInteger(Curve.SHA_512(M), 16);
         System.out.println(H.toString(16));
         rand = new Random();
         len = rand.nextInt(63) + 2;
         res = new BigInteger(len, rand);
         BigInteger k = new BigInteger("1", 10);
-        while (k.equals(BigInteger.ONE) || k.equals(BigInteger.ZERO)) k = E.BlumBlumaBits(res, p);
+        while (k.equals(BigInteger.ONE) || k.equals(BigInteger.ZERO)) k = E.BlumBlumaBits(res, n);
         Curve.DotsGroup kP = Base.ScalarMultipliacationMontgomery(Base, k);
         kP = kP.ToAffine(kP);
         BigInteger r = kP.x.mod(n);
@@ -102,7 +110,7 @@ public class CurveP224 {
             len = rand.nextInt(63) + 2;
             res = new BigInteger(len, rand);
             k = new BigInteger("1", 10);
-            while (k.equals(BigInteger.ONE) || k.equals(BigInteger.ZERO)) k = E.BlumBlumaBits(res, p);
+            while (k.equals(BigInteger.ONE) || k.equals(BigInteger.ZERO)) k = E.BlumBlumaBits(res, n);
             kP = Base.ScalarMultipliacationMontgomery(Base, k);
             kP = kP.ToAffine(kP);
             r = kP.x.mod(n);
@@ -117,5 +125,9 @@ public class CurveP224 {
         System.out.println("Bob sha");
         System.out.println(Hb.toString(16));
         Curve.Verify(r,s,Base,Qa,Hb);
+
+        t2 = System.currentTimeMillis();
+        System.out.println("Times Digital signature : " + (t2 - t1) + "mls");
+        System.out.println("_____________________________________________________________________");
     }
 }
